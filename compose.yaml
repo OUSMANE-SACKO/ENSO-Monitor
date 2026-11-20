@@ -1,15 +1,79 @@
-# Étape 1 : uniquement PostgreSQL, pour le développement local.
+# Stack local de développement uniquement; les identifiants enso/enso ne sont
+# pas destinés à un déploiement public.
 services:
   db:
     image: postgres:16
     environment:
       POSTGRES_USER: enso
-      POSTGRES_PASSWORD: enso        # dev local uniquement
+      POSTGRES_PASSWORD: enso
       POSTGRES_DB: enso
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./backend/scripts/init-test-db.sql:/docker-entrypoint-initdb.d/init-test-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U enso -d enso"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  api:
+    build:
+      context: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://enso:enso@db:5432/enso
+      ONI_URL: https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt
+      CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+    command:
+      - sh
+      - -c
+      - alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - from urllib.request import urlopen; urlopen('http://127.0.0.1:8000/openapi.json', timeout=2).read()
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 15s
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: ""
+    ports:
+      - "5173:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  etl:
+    build:
+      context: ./backend
+    profiles: ["tools"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://enso:enso@db:5432/enso
+      ONI_URL: https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt
+    depends_on:
+      api:
+        condition: service_healthy
+    command: ["python", "-m", "etl.run"]
+
 volumes:
   pgdata:

@@ -41,7 +41,7 @@ class ClimateIndex(Base):
 
 class Source(Base):
     """D'où viennent les données : organisme, URL exacte, version."""
-
+ 
     __tablename__ = "source"
     __table_args__ = (UniqueConstraint("url", "version", name="uq_source_url_version"),)
 
