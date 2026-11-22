@@ -9,6 +9,7 @@ une API FastAPI et les présente dans un tableau de bord React/TypeScript.
 ## Sommaire
 
 - [Périmètre](#périmètre)
+- [Cloner le dépôt](#cloner-le-dépôt)
 - [Démarrage rapide avec Docker](#démarrage-rapide-avec-docker)
 - [Données et provenance](#données-et-provenance)
 - [API](#api)
@@ -32,6 +33,15 @@ La comparaison fournit le nombre d'observations, la moyenne, le maximum et le
 minimum de chaque période, puis une interprétation descriptive accompagnée de
 limites. Les périodes sont choisies par l'utilisateur : l'application ne
 classe pas automatiquement les phases ENSO et ne produit pas de prévision.
+
+## Cloner le dépôt
+
+Dépôt GitHub : [https://github.com/OUSMANE-SACKO/ENSO-Monitor.git](https://github.com/OUSMANE-SACKO/ENSO-Monitor.git)
+
+```bash
+git clone https://github.com/OUSMANE-SACKO/ENSO-Monitor.git
+cd ENSO-Monitor
+```
 
 ## Prérequis
 
